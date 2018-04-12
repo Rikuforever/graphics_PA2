@@ -58,7 +58,7 @@ void Mesh::ComputeFaceNormal()
 		VECTOR3D va = v1 - v0;
 		VECTOR3D vb = v2 - v0;
 		VECTOR3D vc = va.CrossProduct(vb);
-		VECTOR3D vd = va.CrossProduct(vb);
+
 		vc.Normalize();
 		f.normal = vc;
 	}
