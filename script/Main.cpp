@@ -13,9 +13,8 @@ Mode currentMode;
 
 #pragma region Camera
 
-VECTOR3D camera_eye(0.0f, 20.0f,30.0f);
-VECTOR3D camera_center(0.0f, 0.0f, 0.0f);
-VECTOR3D camera_up(0.0f, 1.0f, 0.0f);
+float camera_distance = 30;
+int camera_degree = 0;
 
 #pragma endregion
 
@@ -23,10 +22,10 @@ VECTOR3D camera_up(0.0f, 1.0f, 0.0f);
 
 Mesh teapot_mesh;
 Mesh torus_mesh;
-VECTOR3D teapot_position;
-VECTOR3D torus_position;
-VECTOR3D teapot_rotation;
-VECTOR3D torus_rotation;
+VECTOR3D teapot_position(-3.0, 0.0, 0.0);
+VECTOR3D torus_position(3.0, 0.0, 0.0);
+VECTOR3D teapot_rotation(0.0, 0.0, 0.0);
+VECTOR3D torus_rotation(0.0, 0.0, 0.0);
 
 enum Focus { Teapot, Torus };
 Focus currentFocus;
@@ -82,6 +81,7 @@ void Motion(int x, int y)
 		int motionX = x - anchorX;
 		int motionY = y - anchorY;
 
+		// Change position or rotation values
 		switch (currentMode) {
 			case Translation:
 				VECTOR3D * p;
@@ -109,17 +109,20 @@ void Motion(int x, int y)
 
 				switch (currentAxis) {
 				case X:
-					*r += VECTOR3D(motionY * 0.1, 0.0, 0.0);
+					*r += VECTOR3D(motionY * 0.5, 0.0, 0.0);
 					break;
 				case Y:
-					*r += VECTOR3D(0.0, -motionX * 0.1, 0.0);
+					*r += VECTOR3D(0.0, -motionX * 0.5, 0.0);
 					break;
 				case Z:
-					*r += VECTOR3D(0.0, 0.0, -motionX * 0.1);
+					*r += VECTOR3D(0.0, 0.0, -motionX * 0.5);
 					break;
 				default:
 					break;
 				}
+				r->x = fmodf(r->x, 360.0f);
+				r->y = fmodf(r->y, 360.0f);
+				r->z = fmodf(r->z, 360.0f);
 				break;
 			default:
 				break;
@@ -136,7 +139,13 @@ void Motion(int x, int y)
 // Custom LoadIdentity
 void LoadIdentity() {
 	glLoadIdentity();
-	gluLookAt(camera_eye.x, camera_eye.y, camera_eye.z, camera_center.x, camera_center.y, camera_center.z, camera_up.x, camera_up.y, camera_up.z);
+	gluLookAt(
+		camera_distance * sin(camera_degree * 3.14159f / 180.0f),
+		camera_distance * (2.0f/3.0f), 
+		camera_distance * cos(camera_degree * 3.14159f / 180.0f),
+		0.0f, 0.0f, 0.0f, 
+		0.0f, 1.0f, 0.0f
+	);
 }
 
 void RenderPlane()
@@ -220,15 +229,15 @@ void Reshape(int w, int h)
 
 void Keyboard(unsigned char key, int x, int y)
 {
-	//To Do
-
 	switch(key){
+		// Object
 		case '1':
 			currentFocus = Teapot;
 			break;
 		case '2':
 			currentFocus = Torus;
 			break;
+		// Depth Test
 		case '3':
 			if(DepthTest)
 				glEnable(GL_DEPTH_TEST);
@@ -236,6 +245,7 @@ void Keyboard(unsigned char key, int x, int y)
 				glDisable(GL_DEPTH_TEST);
 			DepthTest = !DepthTest;
 			break;
+		// Mode
 		case 't':
 		case 'T':
 			currentMode = Translation;
@@ -244,6 +254,7 @@ void Keyboard(unsigned char key, int x, int y)
 		case 'R':
 			currentMode = Rotation;
 			break;
+		// Axis
 		case 'x':
 		case 'X':
 			currentAxis = X;
@@ -255,6 +266,26 @@ void Keyboard(unsigned char key, int x, int y)
 		case 'z':
 		case 'Z':
 			currentAxis = Z;
+			break;
+		// Camera
+		case 'w':
+		case 'W':
+			camera_distance -= 0.8;
+			if (camera_distance < 3) camera_distance = 3;
+			break;
+		case 's':
+		case 'S':
+			camera_distance += 0.8;
+			break;
+		case 'a':
+		case 'A':
+			camera_degree -= 3;
+			camera_degree %= 360;
+			break;
+		case 'd':
+		case 'D':
+			camera_degree += 3;
+			camera_degree %= 360;
 			break;
 	}
 	

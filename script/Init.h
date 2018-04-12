@@ -1,6 +1,7 @@
 #include "MATRIX.h"
 
 #include <glut.h>
+#include <math.h>
 
 void Lighting(void)
 {
