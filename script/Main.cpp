@@ -81,16 +81,17 @@ void Motion(int x, int y)
 
 			switch (currentAxis) {
 			case X:
-				*p += VECTOR3D((x - anchorX) * 0.01, 0, 0);
-				;			break;
+				*p += VECTOR3D(motionX * 0.01, 0.0, 0.0);
+				break;
 			case Y:
+				*p += VECTOR3D(0.0, -motionY * 0.01, 0.0);
 				break;
 			case Z:
+				*p += VECTOR3D(0.0, 0.0, motionY * 0.01);
 				break;
 			default:
 				break;
 			}
-
 			break;
 		case Rotation:
 			break;
