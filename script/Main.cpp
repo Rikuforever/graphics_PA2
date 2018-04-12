@@ -6,9 +6,7 @@
 
 using namespace std;
 
-bool DepthTest = true;
-
-enum Mode { None, Translation, Rotation };
+enum Mode { Translation, Rotation };
 Mode currentMode;
 
 #pragma region Camera
@@ -37,26 +35,25 @@ int anchorX; int anchorY;
 
 #pragma endregion
 
+bool isDepthTest = true;
+bool isBackFaceCull = false;
+
 void MeshLoad()
 {
-	//To do
 	// Load Meshes
 	teapot_mesh.LoadMesh("teapot.obj");
 	torus_mesh.LoadMesh("torus.obj");
-
 }
 
 void ComputeNormal()
 {
-	//To do
 	// Compute Normals
 	teapot_mesh.FindNeighborFaceArray();
 	teapot_mesh.ComputeFaceNormal();
 	teapot_mesh.ComputeVertexNormal();
 	torus_mesh.FindNeighborFaceArray();
-	torus_mesh.ComputeVertexNormal();
 	torus_mesh.ComputeFaceNormal();
-
+	torus_mesh.ComputeVertexNormal();
 }
 
 void Mouse(int event, int state, int x, int y)
@@ -177,20 +174,21 @@ void RenderMesh(Mesh m, VECTOR3D p, VECTOR3D r, bool isHighlight = false) {
 		glColor3f(1.0, 1.0, 1.0);
 
 	// Then draw
+	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < m.faceArray.size(); i++) {
 		Face f = m.faceArray[i];
-		VECTOR3D n = f.normal;
-		VECTOR3D v0 = m.vertexArray[f.vertex0].position;
-		VECTOR3D v1 = m.vertexArray[f.vertex1].position;
-		VECTOR3D v2 = m.vertexArray[f.vertex2].position;
+		Vertex v0 = m.vertexArray[f.vertex0];
+		Vertex v1 = m.vertexArray[f.vertex1];
+		Vertex v2 = m.vertexArray[f.vertex2];
 
-		glBegin(GL_TRIANGLES);
-		glNormal3f(n.x, n.y, n.z);
-		glVertex3f(v0.x, v0.y, v0.z);
-		glVertex3f(v1.x, v1.y, v1.z);
-		glVertex3f(v2.x, v2.y, v2.z);
-		glEnd();
+		glNormal3f(v0.normal.x, v0.normal.y, v0.normal.z);
+		glVertex3f(v0.position.x, v0.position.y, v0.position.z);
+		glNormal3f(v1.normal.x, v1.normal.y, v1.normal.z);
+		glVertex3f(v1.position.x, v1.position.y, v1.position.z);
+		glNormal3f(v2.normal.x, v2.normal.y, v2.normal.z);
+		glVertex3f(v2.position.x, v2.position.y, v2.position.z);
 	}
+	glEnd();
 }
 
 void Rendering(void)
@@ -205,7 +203,9 @@ void Rendering(void)
 	// Render Meshes
 	RenderMesh(teapot_mesh, teapot_position, teapot_rotation, currentFocus == Teapot);
 	RenderMesh(torus_mesh, torus_position, torus_rotation, currentFocus == Torus);
-	RenderPlane();
+	
+	// Don't render plane if depth_test is disabled for demonstration purpose
+	if(isDepthTest) RenderPlane();
 
 	// back 버퍼에 랜더링한 후 swap
 	glutSwapBuffers();
@@ -239,11 +239,11 @@ void Keyboard(unsigned char key, int x, int y)
 			break;
 		// Depth Test
 		case '3':
-			if(DepthTest)
+			isDepthTest = !isDepthTest;
+			if (isDepthTest)
 				glEnable(GL_DEPTH_TEST);
 			else
 				glDisable(GL_DEPTH_TEST);
-			DepthTest = !DepthTest;
 			break;
 		// Mode
 		case 't':
@@ -287,6 +287,17 @@ void Keyboard(unsigned char key, int x, int y)
 			camera_degree += 3;
 			camera_degree %= 360;
 			break;
+		// Back Face Culling
+		case 'b':
+		case 'B':
+			isBackFaceCull = !isBackFaceCull;
+			if (isBackFaceCull) {
+				glEnable(GL_CULL_FACE);
+			}
+			else {
+				glDisable(GL_CULL_FACE);
+			}
+			break;
 	}
 	
 	glutPostRedisplay();
@@ -307,8 +318,8 @@ int main(int argc, char** argv)
 {
 	Initialize(argc, argv);			  // 윈도우 생성, 배경색 설정
 
-	MeshLoad();       //To Do
-	ComputeNormal();  //To Do
+	MeshLoad();      
+	ComputeNormal(); 
 
 	EventHandlingAndLoop();      // Event Handling 및 Loop
 
