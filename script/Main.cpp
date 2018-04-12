@@ -6,7 +6,7 @@
 
 using namespace std;
 
-enum Mode { Translation, Rotation };
+enum Mode { Transformation, Rotation };
 Mode currentMode;
 
 #pragma region Camera
@@ -16,7 +16,7 @@ int camera_degree = 0;
 
 #pragma endregion
 
-#pragma region Translation & Rotation
+#pragma region Transformation & Rotation
 
 Mesh teapot_mesh;
 Mesh torus_mesh;
@@ -37,6 +37,49 @@ int anchorX; int anchorY;
 
 bool isDepthTest = true;
 bool isBackFaceCull = false;
+
+// Show current status on cmd
+void PrintDebug() {
+	string modeString;
+	string axisString;
+	string depthString;
+	string cullString;
+
+	switch (currentMode) {
+	case Transformation:
+		modeString = "Transformation";
+		break;
+	case Rotation:
+		modeString = "Rotation";
+		break;
+	default:
+		break;
+	}
+	switch (currentAxis) {
+	case X:
+		axisString = "X";
+		break;
+	case Y:
+		axisString = "Y";
+		break;
+	case Z:
+		axisString = "Z";
+		break;
+	default:
+		break;
+	}
+	if (isDepthTest) { depthString = "On"; }
+	else { depthString = "Off"; }
+	if (isBackFaceCull) { cullString = "On"; }
+	else { cullString = "Off"; }
+
+	cout << string(100, '\n');	// Clear screen
+	cout << "Current Mode : " << modeString << endl;
+	cout << "Current Axis : " << axisString << endl;
+	cout << "Depth Test : " << depthString << endl;
+	cout << "Back Face Cull : " << cullString << endl;
+	cout << "=======================================" << endl;
+}
 
 void MeshLoad()
 {
@@ -80,7 +123,7 @@ void Motion(int x, int y)
 
 		// Change position or rotation values
 		switch (currentMode) {
-			case Translation:
+			case Transformation:
 				VECTOR3D * p;
 				if (currentFocus == Teapot) p = &teapot_position;
 				else p = &torus_position;
@@ -244,28 +287,34 @@ void Keyboard(unsigned char key, int x, int y)
 				glEnable(GL_DEPTH_TEST);
 			else
 				glDisable(GL_DEPTH_TEST);
+			PrintDebug();
 			break;
 		// Mode
 		case 't':
 		case 'T':
-			currentMode = Translation;
+			currentMode = Transformation;
+			PrintDebug();
 			break;
 		case 'r':
 		case 'R':
 			currentMode = Rotation;
+			PrintDebug();
 			break;
 		// Axis
 		case 'x':
 		case 'X':
 			currentAxis = X;
+			PrintDebug();
 			break;
 		case 'y':
 		case 'Y':
 			currentAxis = Y;
+			PrintDebug();
 			break;
 		case 'z':
 		case 'Z':
 			currentAxis = Z;
+			PrintDebug();
 			break;
 		// Camera
 		case 'w':
@@ -297,6 +346,7 @@ void Keyboard(unsigned char key, int x, int y)
 			else {
 				glDisable(GL_CULL_FACE);
 			}
+			PrintDebug();
 			break;
 	}
 	
@@ -318,9 +368,11 @@ int main(int argc, char** argv)
 {
 	Initialize(argc, argv);			  // 윈도우 생성, 배경색 설정
 
+	cout << "Loading..." << endl;
 	MeshLoad();      
 	ComputeNormal(); 
 
+	PrintDebug();
 	EventHandlingAndLoop();      // Event Handling 및 Loop
 
 	// 에러 없이 끝났을 경우 0을 리턴함
