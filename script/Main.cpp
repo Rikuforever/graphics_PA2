@@ -11,6 +11,14 @@ bool DepthTest = true;
 enum Mode { None, Translation, Rotation };
 Mode currentMode;
 
+#pragma region Camera
+
+VECTOR3D camera_eye(0.0f, 20.0f,30.0f);
+VECTOR3D camera_center(0.0f, 0.0f, 0.0f);
+VECTOR3D camera_up(0.0f, 1.0f, 0.0f);
+
+#pragma endregion
+
 #pragma region Translation & Rotation
 
 Mesh teapot_mesh;
@@ -106,8 +114,15 @@ void Motion(int x, int y)
 	glutPostRedisplay();
 }
 
+void LoadIdentity() {
+	glLoadIdentity();
+	gluLookAt(camera_eye.x, camera_eye.y, camera_eye.z, camera_center.x, camera_center.y, camera_center.z, camera_up.x, camera_up.y, camera_up.z);
+}
+
 void RenderPlane()
 {
+	LoadIdentity();
+	
 	glBegin(GL_QUADS);
 	glColor3f(0.8, 0.8, 0.8);
 	glNormal3f(0, 1, 0);
@@ -119,12 +134,15 @@ void RenderPlane()
 }
 
 void RenderMesh(Mesh m, VECTOR3D p, VECTOR3D r, bool isHighlight = false) {
+	LoadIdentity();
+	glTranslatef(p.x, p.y, p.z);
+
 	for (int i = 0; i < m.faceArray.size(); i++) {
 		Face f = m.faceArray[i];
 		VECTOR3D n = f.normal;
-		VECTOR3D v0 = m.vertexArray[f.vertex0].position + p;
-		VECTOR3D v1 = m.vertexArray[f.vertex1].position + p;
-		VECTOR3D v2 = m.vertexArray[f.vertex2].position + p;
+		VECTOR3D v0 = m.vertexArray[f.vertex0].position;
+		VECTOR3D v1 = m.vertexArray[f.vertex1].position;
+		VECTOR3D v2 = m.vertexArray[f.vertex2].position;
 
 		glBegin(GL_TRIANGLES);
 
@@ -148,8 +166,7 @@ void Rendering(void)
 
 	// 화면을 제대로 바라보기 위해 카메라를 회전 후 이동
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(0.0f, 20.0f, 30.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	LoadIdentity();
 	//To Do
 	RenderMesh(teapot_mesh, teapot_position, teapot_rotation, currentFocus == Teapot);
 	RenderMesh(torus_mesh, torus_position, torus_rotation, currentFocus == Torus);
