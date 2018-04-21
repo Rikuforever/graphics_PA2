@@ -14,6 +14,14 @@ Mode currentMode;
 float camera_distance = 30;
 int camera_degree = 0;
 
+VECTOR3D GetCameraPosition() {
+	return VECTOR3D(
+		camera_distance * sin(camera_degree * 3.14159f / 180.0f),
+		camera_distance * (2.0f / 3.0f),
+		camera_distance * cos(camera_degree * 3.14159f / 180.0f)
+	);
+}
+
 #pragma endregion
 
 #pragma region Transformation & Rotation
@@ -178,11 +186,11 @@ void Motion(int x, int y)
 
 // Custom LoadIdentity
 void LoadIdentity() {
+	VECTOR3D cameraPostion = GetCameraPosition();
+
 	glLoadIdentity();
 	gluLookAt(
-		camera_distance * sin(camera_degree * 3.14159f / 180.0f),
-		camera_distance * (2.0f/3.0f), 
-		camera_distance * cos(camera_degree * 3.14159f / 180.0f),
+		cameraPostion.x, cameraPostion.y, cameraPostion.z,
 		0.0f, 0.0f, 0.0f, 
 		0.0f, 1.0f, 0.0f
 	);
@@ -216,13 +224,19 @@ void RenderMesh(Mesh m, VECTOR3D p, VECTOR3D r, bool isHighlight = false) {
 	else
 		glColor3f(1.0, 1.0, 1.0);
 
-	// Then draw
+	VECTOR3D cameraVector = VECTOR3D(0, 0, 0) - GetCameraPosition();
+
+	// Then draw 
 	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < m.faceArray.size(); i++) {
 		Face f = m.faceArray[i];
 		Vertex v0 = m.vertexArray[f.vertex0];
 		Vertex v1 = m.vertexArray[f.vertex1];
 		Vertex v2 = m.vertexArray[f.vertex2];
+
+		// Back Face Culling
+		if (isBackFaceCull && f.normal.InnerProduct(cameraVector) > 0)
+			continue;
 
 		glNormal3f(v0.normal.x, v0.normal.y, v0.normal.z);
 		glVertex3f(v0.position.x, v0.position.y, v0.position.z);
@@ -244,11 +258,9 @@ void Rendering(void)
 	LoadIdentity();
 	
 	// Render Meshes
+	RenderPlane();
 	RenderMesh(teapot_mesh, teapot_position, teapot_rotation, currentFocus == Teapot);
 	RenderMesh(torus_mesh, torus_position, torus_rotation, currentFocus == Torus);
-	
-	// Don't render plane if depth_test is disabled for demonstration purpose
-	if(isDepthTest) RenderPlane();
 
 	// back 버퍼에 랜더링한 후 swap
 	glutSwapBuffers();
@@ -320,7 +332,7 @@ void Keyboard(unsigned char key, int x, int y)
 		case 'w':
 		case 'W':
 			camera_distance -= 0.8;
-			if (camera_distance < 3) camera_distance = 3;
+			if (camera_distance < 3) camera_distance = 3;	// minimum distance 3
 			break;
 		case 's':
 		case 'S':
@@ -340,12 +352,6 @@ void Keyboard(unsigned char key, int x, int y)
 		case 'b':
 		case 'B':
 			isBackFaceCull = !isBackFaceCull;
-			if (isBackFaceCull) {
-				glEnable(GL_CULL_FACE);
-			}
-			else {
-				glDisable(GL_CULL_FACE);
-			}
 			PrintDebug();
 			break;
 	}
@@ -369,6 +375,7 @@ int main(int argc, char** argv)
 	Initialize(argc, argv);			  // 윈도우 생성, 배경색 설정
 
 	cout << "Loading..." << endl;
+
 	MeshLoad();      
 	ComputeNormal(); 
 
