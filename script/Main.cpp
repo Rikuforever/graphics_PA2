@@ -374,9 +374,9 @@ int main(int argc, char** argv)
 {
 	Initialize(argc, argv);			  // 윈도우 생성, 배경색 설정
 
-	cout << "Loading..." << endl;
-
-	MeshLoad();      
+	cout << "Loading[0/2]" << endl;
+	MeshLoad();
+	cout << "Loading[1/2]" << endl;
 	ComputeNormal(); 
 
 	PrintDebug();
